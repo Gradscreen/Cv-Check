@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CV Check</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EEF1EC; --card:#FBFAF7; --ink:#1E2A28; --ink-soft:#516059;
+    --line:#C9D0C7; --stamp:#2F4A46; --pass:#3F6C51; --mid:#A9772C; --low:#A6432F;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:640px;margin:0 auto;padding:48px 24px 80px;}
+  h1{font-family:'Fraunces',serif;font-weight:600;font-size:28px;margin:0 0 6px;letter-spacing:-0.01em;}
+  .sub{color:var(--ink-soft);font-size:14px;margin:0 0 32px;line-height:1.5;}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:2px;padding:26px;}
+  label{display:block;font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-soft);margin:18px 0 6px;}
+  label:first-of-type{margin-top:0;}
+  input[type=text], input[type=email], textarea{
+    width:100%;border:1px solid var(--line);border-radius:2px;background:#fff;
+    padding:10px 12px;font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);
+  }
+  textarea{min-height:90px;resize:vertical;}
+  .dropzone{
+    margin-top:6px;border:1.5px dashed var(--line);border-radius:2px;padding:22px 14px;
+    text-align:center;cursor:pointer;font-size:13px;color:var(--ink-soft);transition:border-color .15s,background .15s;
+  }
+  .dropzone.drag{border-color:var(--stamp);background:#f1f4f0;}
+  .dropzone strong{color:var(--ink);font-weight:500;}
+  .dropzone input{display:none;}
+  .filename{margin-top:8px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink);}
+  .consent{display:flex;align-items:flex-start;gap:8px;margin-top:20px;font-size:12.5px;color:var(--ink-soft);line-height:1.5;}
+  .consent input{margin-top:3px;}
+  .submit-btn{
+    margin-top:22px;width:100%;background:var(--stamp);color:#fff;border:none;border-radius:2px;
+    padding:13px;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;cursor:pointer;
+  }
+  .submit-btn:disabled{background:#9AA6A1;cursor:not-allowed;}
+  .submit-btn:hover:not(:disabled){background:#25403c;}
+  .errormsg{color:var(--low);font-size:13px;margin-top:12px;display:none;}
+  .spinner{width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--stamp);border-radius:50%;display:inline-block;vertical-align:-2px;margin-right:6px;animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .result{display:none;margin-top:32px;}
+  .stamp-row{display:flex;align-items:center;gap:16px;margin-bottom:18px;}
+  .stamp{
+    width:64px;height:64px;border:3px solid var(--stamp);border-radius:50%;display:flex;align-items:center;
+    justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:20px;
+    transform:rotate(-6deg);color:var(--stamp);flex-shrink:0;
+  }
+  .stamp.pass{border-color:var(--pass);color:var(--pass);}
+  .stamp.mid{border-color:var(--mid);color:var(--mid);}
+  .stamp.low{border-color:var(--low);color:var(--low);}
+  .stamp-row h2{font-family:'Fraunces',serif;font-size:18px;font-weight:600;margin:0 0 2px;}
+  .stamp-row p{margin:0;font-size:12.5px;color:var(--ink-soft);}
+  .result .summary{font-size:14px;line-height:1.6;margin-bottom:16px;}
+  .sw{display:grid;grid-template-columns:1fr 1fr;gap:18px;font-size:13px;}
+  .sw h4{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 6px;color:var(--ink-soft);}
+  .sw ul{margin:0;padding-left:16px;line-height:1.55;}
+  .sw.strengths h4{color:var(--pass);}
+  .sw.gaps h4{color:var(--low);}
+  @media (max-width:480px){.sw{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>CV Check</h1>
+  <p class="sub">Submit your CV and, optionally, the role or programme you're targeting. You'll get an instant AI-generated score and feedback. Staff may also review submissions.</p>
+
+  <div class="panel">
+    <form id="cvForm">
+      <label for="name">Your name</label>
+      <input type="text" id="name" name="name" required>
+
+      <label for="email">Your email</label>
+      <input type="email" id="email" name="email" required>
+
+      <label for="target">Target role or programme (optional)</label>
+      <textarea id="target" name="target" placeholder="e.g. Summer internship in marketing, or paste a job description"></textarea>
+
+      <label>Your CV</label>
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upload your CV">
+        <div><strong>Click to upload</strong> or drag your CV here</div>
+        <div style="margin-top:4px;">PDF, DOCX, or TXT — under 4MB</div>
+        <input type="file" id="fileInput" name="cv" accept=".pdf,.docx,.txt" required>
+      </div>
+      <div class="filename" id="filename"></div>
+
+      <div class="consent">
+        <input type="checkbox" id="consent" name="consent" required>
+        <label for="consent" style="margin:0;text-transform:none;font-family:'Inter',sans-serif;letter-spacing:normal;font-size:12.5px;">
+          I consent to my CV being processed by an AI tool and reviewed by staff for feedback purposes.
+        </label>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submitBtn">Check my CV</button>
+      <div class="errormsg" id="errormsg"></div>
+    </form>
+
+    <div class="result" id="result"></div>
+  </div>
+</div>
+
+<script>
+const form = document.getElementById('cvForm');
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const filenameEl = document.getElementById('filename');
+const submitBtn = document.getElementById('submitBtn');
+const errormsg = document.getElementById('errormsg');
+const resultEl = document.getElementById('result');
+
+dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' ') fileInput.click(); });
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('drag');
+  if(e.dataTransfer.files.length){
+    fileInput.files = e.dataTransfer.files;
+    updateFilename();
+  }
+});
+fileInput.addEventListener('change', updateFilename);
+function updateFilename(){
+  filenameEl.textContent = fileInput.files.length ? fileInput.files[0].name : '';
+}
+
+function scoreBand(score){
+  if(score >= 70) return 'pass';
+  if(score >= 45) return 'mid';
+  return 'low';
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  errormsg.style.display = 'none';
+  resultEl.style.display = 'none';
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<span class="spinner"></span>Analyzing...';
+
+  const fd = new FormData();
+  fd.append('name', document.getElementById('name').value);
+  fd.append('email', document.getElementById('email').value);
+  fd.append('target', document.getElementById('target').value);
+  fd.append('consent', document.getElementById('consent').checked ? 'true' : 'false');
+  fd.append('cv', fileInput.files[0]);
+
+  try {
+    const res = await fetch('/api/submit', { method: 'POST', body: fd });
+    const data = await res.json();
+    if(!res.ok){
+      throw new Error(data.error || 'Something went wrong');
+    }
+    renderResult(data.analysis);
+  } catch(err){
+    errormsg.textContent = err.message || 'Network error — please try again.';
+    errormsg.style.display = 'block';
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Check my CV';
+  }
+});
+
+function renderResult(d){
+  const band = scoreBand(d.score);
+  const strengths = (d.strengths||[]).map(s => `<li>${escapeHtml(s)}</li>`).join('') || '<li>—</li>';
+  const gaps = (d.gaps||[]).map(s => `<li>${escapeHtml(s)}</li>`).join('') || '<li>—</li>';
+  resultEl.innerHTML = `
+    <div class="stamp-row">
+      <div class="stamp ${band}">${d.score}</div>
+      <div><h2>Your result</h2><p>Score out of 100 against your target</p></div>
+    </div>
+    <p class="summary">${escapeHtml(d.summary || '')}</p>
+    <div class="sw">
+      <div class="strengths"><h4>Strengths</h4><ul>${strengths}</ul></div>
+      <div class="gaps"><h4>Areas to improve</h4><ul>${gaps}</ul></div>
+    </div>
+  `;
+  resultEl.style.display = 'block';
+  resultEl.scrollIntoView({behavior:'smooth', block:'start'});
+}
+</script>
+</body>
+</html>

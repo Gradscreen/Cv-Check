@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staff Dashboard — CV Check</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EEF1EC; --card:#FBFAF7; --ink:#1E2A28; --ink-soft:#516059;
+    --line:#C9D0C7; --stamp:#2F4A46; --pass:#3F6C51; --mid:#A9772C; --low:#A6432F;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:960px;margin:0 auto;padding:36px 24px 80px;}
+  header{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:28px;flex-wrap:wrap;gap:8px;}
+  h1{font-family:'Fraunces',serif;font-weight:600;font-size:24px;margin:0;letter-spacing:-0.01em;}
+  .meta{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);}
+
+  #loginPanel{max-width:340px;margin:80px auto;background:var(--card);border:1px solid var(--line);border-radius:2px;padding:26px;}
+  #loginPanel h2{font-family:'Fraunces',serif;font-size:18px;margin:0 0 14px;}
+  #loginPanel input{width:100%;border:1px solid var(--line);border-radius:2px;padding:10px 12px;font-size:14px;margin-bottom:12px;}
+  #loginPanel button{width:100%;background:var(--stamp);color:#fff;border:none;border-radius:2px;padding:11px;font-weight:600;cursor:pointer;}
+  #loginPanel .err{color:var(--low);font-size:13px;margin-top:8px;display:none;}
+
+  .logout{background:none;border:1px solid var(--line);border-radius:2px;padding:6px 12px;font-size:12px;cursor:pointer;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;}
+
+  .cards{display:flex;flex-direction:column;gap:12px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:2px;padding:16px 20px;display:grid;grid-template-columns:52px 1fr auto;gap:16px;align-items:start;}
+  @media (max-width:600px){.card{grid-template-columns:44px 1fr;}}
+  .stamp{width:48px;height:48px;border:2.5px solid var(--stamp);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:15px;transform:rotate(-6deg);color:var(--stamp);}
+  .stamp.pass{border-color:var(--pass);color:var(--pass);}
+  .stamp.mid{border-color:var(--mid);color:var(--mid);}
+  .stamp.low{border-color:var(--low);color:var(--low);}
+  .cbody .name{font-family:'Fraunces',serif;font-size:16px;font-weight:600;margin:0 0 2px;}
+  .cbody .contact{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);margin-bottom:6px;}
+  .cbody .target{font-size:12.5px;color:var(--ink-soft);margin-bottom:8px;font-style:italic;}
+  .cbody .summary{font-size:13px;line-height:1.5;margin-bottom:8px;display:none;}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;display:none;}
+  .tag{font-family:'IBM Plex Mono',monospace;font-size:10.5px;background:#fff;border:1px solid var(--line);border-radius:2px;padding:3px 7px;color:var(--ink-soft);}
+  .sw{display:none;grid-template-columns:1fr 1fr;gap:14px;font-size:12px;margin-top:6px;}
+  .sw h4{font-family:'IBM Plex Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 4px;color:var(--ink-soft);}
+  .sw ul{margin:0;padding-left:15px;line-height:1.5;}
+  .sw.strengths h4{color:var(--pass);}
+  .sw.gaps h4{color:var(--low);}
+  .card.open .summary, .card.open .tags, .card.open .sw{display:block;}
+  .card.open .sw{display:grid;}
+  .actions{display:flex;flex-direction:column;gap:6px;align-items:flex-end;}
+  .toggle, .delete{background:none;border:none;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--stamp);text-decoration:underline;padding:0;}
+  .delete{color:var(--low);}
+  .empty{border:1px dashed var(--line);border-radius:2px;padding:40px;text-align:center;color:var(--ink-soft);font-size:13.5px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="loginPanel">
+    <h2>Staff login</h2>
+    <input type="password" id="password" placeholder="Password">
+    <button id="loginBtn">Log in</button>
+    <div class="err" id="loginErr">Incorrect password</div>
+  </div>
+
+  <div id="dashboard" style="display:none;">
+    <header>
+      <h1>CV Check — Submissions</h1>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <span class="meta" id="countMeta"></span>
+        <button class="logout" id="logoutBtn">Log out</button>
+      </div>
+    </header>
+    <div id="cardsArea"></div>
+  </div>
+
+</div>
+
+<script>
+const loginPanel = document.getElementById('loginPanel');
+const dashboard = document.getElementById('dashboard');
+const passwordInput = document.getElementById('password');
+const loginBtn = document.getElementById('loginBtn');
+const loginErr = document.getElementById('loginErr');
+const logoutBtn = document.getElementById('logoutBtn');
+const cardsArea = document.getElementById('cardsArea');
+const countMeta = document.getElementById('countMeta');
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function scoreBand(score){
+  if(score >= 70) return 'pass';
+  if(score >= 45) return 'mid';
+  return 'low';
+}
+
+async function checkSession(){
+  const res = await fetch('/api/staff/session');
+  const data = await res.json();
+  if(data.authenticated){
+    showDashboard();
+  }
+}
+
+loginBtn.addEventListener('click', doLogin);
+passwordInput.addEventListener('keydown', e => { if(e.key === 'Enter') doLogin(); });
+
+async function doLogin(){
+  loginErr.style.display = 'none';
+  const res = await fetch('/api/staff/login', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ password: passwordInput.value })
+  });
+  if(res.ok){
+    showDashboard();
+  } else {
+    loginErr.style.display = 'block';
+  }
+}
+
+logoutBtn.addEventListener('click', async () => {
+  await fetch('/api/staff/logout', { method: 'POST' });
+  loginPanel.style.display = 'block';
+  dashboard.style.display = 'none';
+  passwordInput.value = '';
+});
+
+async function showDashboard(){
+  loginPanel.style.display = 'none';
+  dashboard.style.display = 'block';
+  await loadSubmissions();
+}
+
+async function loadSubmissions(){
+  const res = await fetch('/api/staff/submissions');
+  if(!res.ok){ return; }
+  const data = await res.json();
+  countMeta.textContent = `${data.length} submission${data.length===1?'':'s'}`;
+  if(data.length === 0){
+    cardsArea.innerHTML = '<div class="empty">No submissions yet.</div>';
+    return;
+  }
+  const container = document.createElement('div');
+  container.className = 'cards';
+  data.forEach((sub, i) => {
+    const d = sub.analysis || {};
+    const band = scoreBand(d.score || 0);
+    const skillTags = (d.skills||[]).map(s => `<span class="tag">${escapeHtml(s)}</span>`).join('');
+    const strengths = (d.strengths||[]).map(s => `<li>${escapeHtml(s)}</li>`).join('') || '<li>—</li>';
+    const gaps = (d.gaps||[]).map(s => `<li>${escapeHtml(s)}</li>`).join('') || '<li>—</li>';
+    const date = new Date(sub.submittedAt).toLocaleString();
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="stamp ${band}">${d.score ?? '—'}</div>
+      <div class="cbody">
+        <p class="name">${escapeHtml(sub.studentName)}</p>
+        <div class="contact">${escapeHtml(sub.studentEmail)} · ${escapeHtml(date)} · ${escapeHtml(sub.fileName || '')}</div>
+        ${sub.target ? `<div class="target">Target: ${escapeHtml(sub.target)}</div>` : ''}
+        <p class="summary">${escapeHtml(d.summary || '')}</p>
+        <div class="tags">${skillTags}</div>
+        <div class="sw">
+          <div class="strengths"><h4>Strengths</h4><ul>${strengths}</ul></div>
+          <div class="gaps"><h4>Gaps</h4><ul>${gaps}</ul></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="toggle">Details</button>
+        <button class="delete">Delete</button>
+      </div>
+    `;
+    card.querySelector('.toggle').addEventListener('click', () => {
+      card.classList.toggle('open');
+      card.querySelector('.toggle').textContent = card.classList.contains('open') ? 'Hide' : 'Details';
+    });
+    card.querySelector('.delete').addEventListener('click', async () => {
+      if(!confirm(`Delete ${sub.studentName}'s submission? This can't be undone.`)) return;
+      await fetch(`/api/staff/submissions/${sub.id}`, { method: 'DELETE' });
+      loadSubmissions();
+    });
+    container.appendChild(card);
+  });
+  cardsArea.innerHTML = '';
+  cardsArea.appendChild(container);
+}
+
+checkSession();
+</script>
+</body>
+</html>
