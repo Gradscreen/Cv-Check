@@ -19,6 +19,21 @@ own API key — separate from your claude.ai account:
    of a cent per CV with the model used here)
 3. Create an API key under **Settings > API Keys**
 
+## 1b. Get an email alert key (Resend)
+
+Every enquiry emails your team automatically via [Resend](https://resend.com):
+
+1. Sign up at resend.com (free tier covers small volume easily)
+2. Create an API key under **API Keys**
+3. For quick testing, you can send from Resend's shared address
+   `onboarding@resend.dev` with no extra setup. To send from your own domain
+   (e.g. `enquiries@yourcompany.com`), verify it under **Domains** in Resend —
+   they'll give you DNS records to add in GoDaddy, similar to the CNAME step
+   in section 4 below.
+
+If you skip this, the app still works — it just won't send email alerts, and
+you'd rely on the staff dashboard alone to see new enquiries.
+
 ## 2. Configure
 
 Copy `.env.example` to `.env` and fill in:
@@ -28,6 +43,9 @@ ANTHROPIC_API_KEY=your key from step 1
 STAFF_PASSWORD=a real password, not "changeme"
 SESSION_SECRET=a random string — generate with:
   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+RESEND_API_KEY=your key from step 1b
+COMPANY_EMAIL=the inbox that should get new-enquiry alerts
+FROM_EMAIL=onboarding@resend.dev (or your verified domain address)
 ```
 
 **Never** commit `.env` to git or put the API key anywhere in the `public/`
@@ -60,6 +78,33 @@ can't run a persistent Node server like this one). The simplest path:
    or check your hosting provider's docs for connecting a custom domain —
    Render and Railway both have a "Custom Domain" setting that will tell you
    exactly which DNS record to add.
+
+## Swapping in real photography
+
+The background art is currently a small tiled pattern of icons (caps, books,
+scrolls) drawn directly in code — no photo license needed. If you get
+licensed photos later (your own campus, students who've consented to be
+featured, or licensed stock), here's how to swap it in, in both
+`public/index.html` and `public/dashboard.html`:
+
+1. Add your image file to `public/images/` — e.g. `public/images/campus.jpg`
+2. In the `<head>`/CSS section, find the comment block labelled
+   **"ARTWORK SWAP POINT"**. Uncomment the `.bg-photo` rule just below it,
+   and update the filename in `background-image:url('images/campus.jpg')`
+   if you named it differently.
+3. In the HTML body, find the matching **"ARTWORK SWAP POINT"** comment.
+   Delete the `<svg class="bg-pattern">...</svg>` block and replace it with:
+   ```html
+   <div class="bg-photo"></div>
+   ```
+4. Redeploy. The photo will sit behind the content with a soft tint overlay
+   (matching the current background color) so text stays readable — adjust
+   the opacity values in `.bg-photo::after` if you want the photo more or
+   less visible.
+
+Only use images you actually have the rights to — your own photography,
+stock with an appropriate license, or photos of students/staff who've given
+explicit consent to be used on the site.
 
 ## Notes on privacy and safety
 

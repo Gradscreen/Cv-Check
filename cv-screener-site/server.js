@@ -8,6 +8,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const mammoth = require('mammoth');
 const Anthropic = require('@anthropic-ai/sdk');
+const { Resend } = require('resend');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,6 +25,14 @@ if (STAFF_PASSWORD === 'changeme') {
 }
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+if (!resend) {
+  console.warn('WARNING: RESEND_API_KEY is not set. New-enquiry email alerts will be skipped.');
+}
+if (!process.env.COMPANY_EMAIL) {
+  console.warn('WARNING: COMPANY_EMAIL is not set. New-enquiry email alerts will be skipped.');
+}
 
 // --- tiny JSON file "database" -------------------------------------------
 // Fine for small/medium volume. Swap for a real database later if you need
@@ -139,7 +148,48 @@ async function analyzeCV(contentBlock, target) {
   return JSON.parse(clean);
 }
 
-// --- student-facing endpoint ------------------------------------------------
+async function sendEnquiryAlert(record) {
+  if (!resend || !process.env.COMPANY_EMAIL) return;
+  const d = record.analysis || {};
+  const strengths = (d.strengths || []).map(s => `<li>${escapeHtml(s)}</li>`).join('');
+  const gaps = (d.gaps || []).map(s => `<li>${escapeHtml(s)}</li>`).join('');
+  const skills = (d.skills || []).map(s => escapeHtml(s)).join(', ');
+
+  const html = `
+    <h2>New enquiry: ${escapeHtml(record.studentName)}</h2>
+    <p>
+      <strong>Email:</strong> ${escapeHtml(record.studentEmail)}<br>
+      <strong>Phone:</strong> ${escapeHtml(record.phone || 'Not provided')}<br>
+      <strong>Interested in:</strong> ${escapeHtml(record.target || 'Not specified')}<br>
+      <strong>Heard about us via:</strong> ${escapeHtml(record.referral || 'Not specified')}
+    </p>
+    ${record.message ? `<p><strong>Message:</strong><br>${escapeHtml(record.message)}</p>` : ''}
+    <hr>
+    <h3>AI screening summary (score: ${d.score ?? 'n/a'}/100)</h3>
+    <p>${escapeHtml(d.summary || '')}</p>
+    <p><strong>Skills:</strong> ${skills || 'None extracted'}</p>
+    <p><strong>Strengths:</strong></p><ul>${strengths || '<li>None listed</li>'}</ul>
+    <p><strong>Gaps:</strong></p><ul>${gaps || '<li>None listed</li>'}</ul>
+    <hr>
+    <p style="color:#666;font-size:12px;">Full details and CV history are in the staff dashboard.</p>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: process.env.FROM_EMAIL || 'onboarding@resend.dev',
+      to: process.env.COMPANY_EMAIL,
+      subject: `New enquiry: ${record.studentName} (score ${d.score ?? 'n/a'})`,
+      html
+    });
+  } catch (err) {
+    console.error('Failed to send enquiry alert email:', err.message);
+    // Don't let an email failure break the student's submission
+  }
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 app.post('/api/submit', submitLimiter, (req, res) => {
   upload.single('cv')(req, res, async (err) => {
     if (err) {
@@ -149,7 +199,7 @@ app.post('/api/submit', submitLimiter, (req, res) => {
       return res.status(400).json({ error: msg });
     }
     try {
-      const { name, email, target, consent } = req.body;
+      const { name, email, phone, target, message, referral, consent } = req.body;
       if (!name || !email) return res.status(400).json({ error: 'Name and email are required' });
       if (consent !== 'true') return res.status(400).json({ error: 'Please confirm consent to processing before submitting' });
       if (!req.file) return res.status(400).json({ error: 'No CV file uploaded' });
@@ -162,13 +212,18 @@ app.post('/api/submit', submitLimiter, (req, res) => {
         submittedAt: new Date().toISOString(),
         studentName: name,
         studentEmail: email,
+        phone: phone || '',
         target: target || '',
+        message: message || '',
+        referral: referral || '',
         fileName: req.file.originalname,
         analysis
       };
       const all = readSubmissions();
       all.push(record);
       writeSubmissions(all);
+
+      sendEnquiryAlert(record); // fire and forget — don't block the student's response on email delivery
 
       res.json({ ok: true, analysis });
     } catch (e) {

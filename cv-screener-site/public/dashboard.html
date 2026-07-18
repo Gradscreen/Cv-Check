@@ -3,56 +3,106 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Staff Dashboard — CV Check</title>
+<title>Staff Dashboard — GradScreen</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --paper:#EEF1EC; --card:#FBFAF7; --ink:#1E2A28; --ink-soft:#516059;
-    --line:#C9D0C7; --stamp:#2F4A46; --pass:#3F6C51; --mid:#A9772C; --low:#A6432F;
+    --bg:#EFF1FA; --card:#FFFFFF; --ink:#211F3D; --ink-soft:#5B577B; --line:#E1DEF3;
+    --accent:#FFB648; --accent-ink:#7A4B00; --deep:#5B4FE8;
+    --pass:#2E9E6B; --mid:#E0932E; --low:#E15B5B;
   }
   *{box-sizing:border-box;}
-  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;}
-  .wrap{max-width:960px;margin:0 auto;padding:36px 24px 80px;}
-  header{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:28px;flex-wrap:wrap;gap:8px;}
-  h1{font-family:'Fraunces',serif;font-weight:600;font-size:24px;margin:0;letter-spacing:-0.01em;}
-  .meta{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;}
+  .bg-pattern{
+    position:fixed;inset:0;width:100%;height:100%;
+    z-index:0;pointer-events:none;
+    color:var(--deep);fill:currentColor;stroke:currentColor;
+    opacity:0.1;
+  }
+  /* ARTWORK SWAP POINT — see public/index.html for the full instructions.
+     Uncomment and point at your licensed image once you have one. */
+  /*
+  .bg-photo{
+    position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;
+    background-image:url('images/campus.jpg');
+    background-size:cover;background-position:center;
+  }
+  .bg-photo::after{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(180deg, rgba(239,241,250,0.92) 0%, rgba(239,241,250,0.85) 100%);
+  }
+  */
+  .wrap{max-width:980px;margin:0 auto;padding:40px 24px 90px;position:relative;z-index:1;}
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:30px;flex-wrap:wrap;gap:10px;}
+  h1{font-family:'Instrument Serif',serif;font-weight:400;font-size:28px;margin:0;}
+  .meta{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-soft);}
 
-  #loginPanel{max-width:340px;margin:80px auto;background:var(--card);border:1px solid var(--line);border-radius:2px;padding:26px;}
-  #loginPanel h2{font-family:'Fraunces',serif;font-size:18px;margin:0 0 14px;}
-  #loginPanel input{width:100%;border:1px solid var(--line);border-radius:2px;padding:10px 12px;font-size:14px;margin-bottom:12px;}
-  #loginPanel button{width:100%;background:var(--stamp);color:#fff;border:none;border-radius:2px;padding:11px;font-weight:600;cursor:pointer;}
-  #loginPanel .err{color:var(--low);font-size:13px;margin-top:8px;display:none;}
+  #loginPanel{max-width:360px;margin:100px auto;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:32px;box-shadow:0 20px 50px -30px rgba(33,31,61,0.35);position:relative;z-index:1;}
+  #loginPanel h2{font-family:'Instrument Serif',serif;font-size:22px;margin:0 0 16px;font-weight:400;}
+  #loginPanel input{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:11px 14px;font-size:14.5px;margin-bottom:14px;background:#FBFBFE;}
+  #loginPanel input:focus{outline:none;border-color:var(--deep);background:#fff;}
+  #loginPanel button{width:100%;background:var(--accent);color:var(--accent-ink);border:none;border-radius:999px;padding:13px;font-weight:700;cursor:pointer;box-shadow:0 12px 24px -10px rgba(255,182,72,0.7);}
+  #loginPanel .err{color:var(--low);font-size:13px;margin-top:10px;display:none;}
 
-  .logout{background:none;border:1px solid var(--line);border-radius:2px;padding:6px 12px;font-size:12px;cursor:pointer;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;}
+  .logout{background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:7px 16px;font-size:12.5px;cursor:pointer;color:var(--ink-soft);font-weight:600;}
 
-  .cards{display:flex;flex-direction:column;gap:12px;}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:2px;padding:16px 20px;display:grid;grid-template-columns:52px 1fr auto;gap:16px;align-items:start;}
+  .cards{display:flex;flex-direction:column;gap:14px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 22px;display:grid;grid-template-columns:52px 1fr auto;gap:18px;align-items:start;box-shadow:0 12px 30px -24px rgba(33,31,61,0.4);}
   @media (max-width:600px){.card{grid-template-columns:44px 1fr;}}
-  .stamp{width:48px;height:48px;border:2.5px solid var(--stamp);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:15px;transform:rotate(-6deg);color:var(--stamp);}
+  .stamp{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:15px;background:#F3F2FC;border:2.5px solid var(--deep);color:var(--deep);}
   .stamp.pass{border-color:var(--pass);color:var(--pass);}
   .stamp.mid{border-color:var(--mid);color:var(--mid);}
   .stamp.low{border-color:var(--low);color:var(--low);}
-  .cbody .name{font-family:'Fraunces',serif;font-size:16px;font-weight:600;margin:0 0 2px;}
-  .cbody .contact{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);margin-bottom:6px;}
-  .cbody .target{font-size:12.5px;color:var(--ink-soft);margin-bottom:8px;font-style:italic;}
-  .cbody .summary{font-size:13px;line-height:1.5;margin-bottom:8px;display:none;}
+  .cbody .name{font-family:'Instrument Serif',serif;font-size:18px;font-weight:400;margin:0 0 3px;}
+  .cbody .contact{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-soft);margin-bottom:6px;}
+  .cbody .target{font-size:12.5px;color:var(--deep);margin-bottom:6px;font-weight:500;}
+  .cbody .summary{font-size:13px;line-height:1.5;margin-bottom:8px;display:none;color:var(--ink);}
   .tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;display:none;}
-  .tag{font-family:'IBM Plex Mono',monospace;font-size:10.5px;background:#fff;border:1px solid var(--line);border-radius:2px;padding:3px 7px;color:var(--ink-soft);}
-  .sw{display:none;grid-template-columns:1fr 1fr;gap:14px;font-size:12px;margin-top:6px;}
-  .sw h4{font-family:'IBM Plex Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 4px;color:var(--ink-soft);}
+  .tag{font-family:'JetBrains Mono',monospace;font-size:10.5px;background:#F3F2FC;border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--deep);}
+  .sw{display:none;grid-template-columns:1fr 1fr;gap:14px;font-size:12px;margin-top:8px;}
+  .sw h4{font-family:'JetBrains Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 4px;color:var(--ink-soft);}
   .sw ul{margin:0;padding-left:15px;line-height:1.5;}
   .sw.strengths h4{color:var(--pass);}
   .sw.gaps h4{color:var(--low);}
   .card.open .summary, .card.open .tags, .card.open .sw{display:block;}
   .card.open .sw{display:grid;}
-  .actions{display:flex;flex-direction:column;gap:6px;align-items:flex-end;}
-  .toggle, .delete{background:none;border:none;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--stamp);text-decoration:underline;padding:0;}
+  .actions{display:flex;flex-direction:column;gap:8px;align-items:flex-end;}
+  .toggle, .delete{background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600;font-size:12px;color:var(--deep);padding:0;}
   .delete{color:var(--low);}
-  .empty{border:1px dashed var(--line);border-radius:2px;padding:40px;text-align:center;color:var(--ink-soft);font-size:13.5px;}
+  .empty{border:1.5px dashed var(--line);border-radius:16px;padding:50px;text-align:center;color:var(--ink-soft);font-size:13.5px;background:var(--card);}
 </style>
 </head>
 <body>
+<!-- ARTWORK SWAP POINT: see public/index.html and README.md -->
+<svg class="bg-pattern" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <symbol id="icon-cap" viewBox="0 0 40 40">
+      <path d="M2 14 L20 6 L38 14 L20 22 Z"/>
+      <path d="M20 22 L20 30" stroke-width="1.8" fill="none"/>
+      <circle cx="20" cy="31.5" r="1.8"/>
+      <path d="M9 16.3 L9 25 Q20 30 31 25 L31 16.3" fill="none" stroke-width="1.8"/>
+    </symbol>
+    <symbol id="icon-book" viewBox="0 0 40 40">
+      <path d="M4 8 Q12 4 19 8 L19 30 Q12 26 4 30 Z"/>
+      <path d="M36 8 Q28 4 21 8 L21 30 Q28 26 36 30 Z"/>
+    </symbol>
+    <symbol id="icon-scroll" viewBox="0 0 40 40">
+      <rect x="6" y="12" width="28" height="16" rx="8"/>
+      <line x1="6" y1="12" x2="6" y2="28" stroke-width="2"/>
+      <line x1="34" y1="12" x2="34" y2="28" stroke-width="2"/>
+    </symbol>
+    <pattern id="uniPattern" width="280" height="280" patternUnits="userSpaceOnUse">
+      <use href="#icon-cap" x="10" y="10" width="52" height="52"/>
+      <use href="#icon-book" x="150" y="40" width="46" height="46" transform="rotate(-10 173 63)"/>
+      <use href="#icon-scroll" x="60" y="150" width="48" height="48" transform="rotate(6 84 174)"/>
+      <use href="#icon-cap" x="200" y="190" width="38" height="38" transform="rotate(14 219 209)"/>
+      <use href="#icon-book" x="-10" y="200" width="40" height="40" transform="rotate(8 10 220)"/>
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#uniPattern)"/>
+</svg>
+
 <div class="wrap">
 
   <div id="loginPanel">
@@ -64,7 +114,7 @@
 
   <div id="dashboard" style="display:none;">
     <header>
-      <h1>CV Check — Submissions</h1>
+      <h1>Enquiries</h1>
       <div style="display:flex;align-items:center;gap:14px;">
         <span class="meta" id="countMeta"></span>
         <button class="logout" id="logoutBtn">Log out</button>
@@ -157,8 +207,10 @@ async function loadSubmissions(){
       <div class="stamp ${band}">${d.score ?? '—'}</div>
       <div class="cbody">
         <p class="name">${escapeHtml(sub.studentName)}</p>
-        <div class="contact">${escapeHtml(sub.studentEmail)} · ${escapeHtml(date)} · ${escapeHtml(sub.fileName || '')}</div>
-        ${sub.target ? `<div class="target">Target: ${escapeHtml(sub.target)}</div>` : ''}
+        <div class="contact">${escapeHtml(sub.studentEmail)}${sub.phone ? ' · ' + escapeHtml(sub.phone) : ''} · ${escapeHtml(date)} · ${escapeHtml(sub.fileName || '')}</div>
+        ${sub.target ? `<div class="target">Interested in: ${escapeHtml(sub.target)}</div>` : ''}
+        ${sub.referral ? `<div class="target" style="color:var(--ink-soft);font-weight:400;">Source: ${escapeHtml(sub.referral)}</div>` : ''}
+        ${sub.message ? `<p class="summary" style="display:block;"><strong>Message:</strong> ${escapeHtml(sub.message)}</p>` : ''}
         <p class="summary">${escapeHtml(d.summary || '')}</p>
         <div class="tags">${skillTags}</div>
         <div class="sw">

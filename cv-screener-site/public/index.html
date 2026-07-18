@@ -3,85 +3,283 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CV Check</title>
+<title>GradScreen — Let's find your next role</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --paper:#EEF1EC; --card:#FBFAF7; --ink:#1E2A28; --ink-soft:#516059;
-    --line:#C9D0C7; --stamp:#2F4A46; --pass:#3F6C51; --mid:#A9772C; --low:#A6432F;
+    --bg:#EFF1FA;
+    --card:#FFFFFF;
+    --ink:#211F3D;
+    --ink-soft:#5B577B;
+    --line:#E1DEF3;
+    --accent:#FFB648;
+    --accent-ink:#7A4B00;
+    --deep:#5B4FE8;
+    --pass:#2E9E6B;
+    --mid:#E0932E;
+    --low:#E15B5B;
   }
   *{box-sizing:border-box;}
-  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;}
-  .wrap{max-width:640px;margin:0 auto;padding:48px 24px 80px;}
-  h1{font-family:'Fraunces',serif;font-weight:600;font-size:28px;margin:0 0 6px;letter-spacing:-0.01em;}
-  .sub{color:var(--ink-soft);font-size:14px;margin:0 0 32px;line-height:1.5;}
-  .panel{background:var(--card);border:1px solid var(--line);border-radius:2px;padding:26px;}
-  label{display:block;font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-soft);margin:18px 0 6px;}
-  label:first-of-type{margin-top:0;}
-  input[type=text], input[type=email], textarea{
-    width:100%;border:1px solid var(--line);border-radius:2px;background:#fff;
-    padding:10px 12px;font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    position:relative;
+    overflow-x:hidden;
   }
-  textarea{min-height:90px;resize:vertical;}
+  body::before{
+    content:"";
+    position:fixed;
+    top:-200px;right:-160px;
+    width:520px;height:520px;
+    background:radial-gradient(circle, rgba(255,182,72,0.35) 0%, rgba(255,182,72,0) 70%);
+    z-index:0;
+  }
+  body::after{
+    content:"";
+    position:fixed;
+    bottom:-220px;left:-180px;
+    width:560px;height:560px;
+    background:radial-gradient(circle, rgba(91,79,232,0.16) 0%, rgba(91,79,232,0) 70%);
+    z-index:0;
+  }
+  .bg-pattern{
+    position:fixed;inset:0;width:100%;height:100%;
+    z-index:0;pointer-events:none;
+    color:var(--deep);fill:currentColor;stroke:currentColor;
+    opacity:0.1;
+  }
+
+  /* ==========================================================================
+     ARTWORK SWAP POINT
+     Right now the background is the icon pattern above (.bg-pattern) — drawn
+     in code, so no image license is needed.
+
+     Once you have LICENSED photos (e.g. of your own campus or students who've
+     consented to appear on the site):
+       1. Drop the image(s) into /public/images/
+       2. In the HTML below, delete (or comment out) the <svg class="bg-pattern">
+          block and add: <div class="bg-photo"></div> in its place
+       3. Set the filename below and uncomment this rule
+     See README.md → "Swapping in real photography" for the full walkthrough.
+  ========================================================================== */
+  /*
+  .bg-photo{
+    position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;
+    background-image:url('images/campus.jpg');
+    background-size:cover;background-position:center;
+  }
+  .bg-photo::after{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(180deg, rgba(239,241,250,0.9) 0%, rgba(239,241,250,0.75) 100%);
+  }
+  */
+  .hero{max-width:680px;margin:0 auto;padding:64px 24px 0;position:relative;z-index:1;}
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;font-size:11.5px;text-transform:uppercase;
+    letter-spacing:0.12em;color:var(--deep);font-weight:500;margin-bottom:14px;
+  }
+  h1{
+    font-family:'Instrument Serif',serif;font-weight:400;font-style:normal;
+    font-size:46px;line-height:1.08;margin:0 0 16px;letter-spacing:-0.01em;
+  }
+  h1 em{font-style:italic;color:var(--deep);}
+  .sub{color:var(--ink-soft);font-size:16px;margin:0 0 44px;line-height:1.6;max-width:520px;}
+
+  /* Pathway — the real 3 steps a student goes through */
+  .pathway{
+    display:flex;justify-content:space-between;align-items:flex-start;
+    max-width:680px;margin:0 auto;padding:0 24px 46px;position:relative;z-index:1;
+  }
+  .pathway::before{
+    content:"";position:absolute;top:15px;left:74px;right:74px;height:2px;
+    background:repeating-linear-gradient(to right, var(--deep) 0 6px, transparent 6px 12px);
+    opacity:0.35;
+  }
+  .waypoint{flex:1;text-align:center;position:relative;}
+  .waypoint .dot{
+    width:32px;height:32px;border-radius:50%;background:var(--card);border:2px solid var(--deep);
+    display:flex;align-items:center;justify-content:center;margin:0 auto 10px;
+    font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;color:var(--deep);
+    position:relative;z-index:1;
+  }
+  .waypoint.active .dot{background:var(--deep);color:#fff;}
+  .waypoint .wlabel{font-size:12.5px;color:var(--ink-soft);line-height:1.4;padding:0 8px;}
+  .waypoint .wlabel strong{color:var(--ink);display:block;font-weight:600;font-size:13px;margin-bottom:1px;}
+
+  .wrap{max-width:680px;margin:0 auto;padding:0 24px 90px;position:relative;z-index:1;}
+  .panel{
+    background:var(--card);border:1px solid var(--line);border-radius:20px;
+    padding:36px;box-shadow:0 20px 50px -30px rgba(33,31,61,0.35);
+  }
+  .section-label{
+    font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;
+    color:var(--deep);margin:0 0 4px;padding-top:28px;
+  }
+  .section-label:first-child{padding-top:0;}
+  label{
+    display:block;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;
+    color:var(--ink);margin:16px 0 6px;
+  }
+  input[type=text], input[type=email], input[type=tel], select, textarea{
+    width:100%;border:1.5px solid var(--line);border-radius:12px;background:#FBFBFE;
+    padding:11px 14px;font-family:'Inter',sans-serif;font-size:14.5px;color:var(--ink);
+    transition:border-color .15s, background .15s;
+  }
+  input:focus, select:focus, textarea:focus{
+    outline:none;border-color:var(--deep);background:#fff;
+  }
+  textarea{min-height:80px;resize:vertical;}
+  select{
+    appearance:none;
+    background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8"><path d="M1 1l5 5 5-5" stroke="%235B577B" stroke-width="1.5" fill="none"/></svg>');
+    background-repeat:no-repeat;background-position:right 14px center;
+  }
   .dropzone{
-    margin-top:6px;border:1.5px dashed var(--line);border-radius:2px;padding:22px 14px;
-    text-align:center;cursor:pointer;font-size:13px;color:var(--ink-soft);transition:border-color .15s,background .15s;
+    margin-top:6px;border:1.5px dashed var(--line);border-radius:14px;padding:26px 14px;
+    text-align:center;cursor:pointer;font-size:13.5px;color:var(--ink-soft);
+    transition:border-color .15s, background .15s;background:#FBFBFE;
   }
-  .dropzone.drag{border-color:var(--stamp);background:#f1f4f0;}
-  .dropzone strong{color:var(--ink);font-weight:500;}
+  .dropzone.drag{border-color:var(--deep);background:#F3F2FC;}
+  .dropzone strong{color:var(--ink);font-weight:600;}
   .dropzone input{display:none;}
-  .filename{margin-top:8px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink);}
-  .consent{display:flex;align-items:flex-start;gap:8px;margin-top:20px;font-size:12.5px;color:var(--ink-soft);line-height:1.5;}
-  .consent input{margin-top:3px;}
+  .filename{margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--deep);}
+  .consent{display:flex;align-items:flex-start;gap:9px;margin-top:24px;font-size:12.5px;color:var(--ink-soft);line-height:1.5;}
+  .consent input{margin-top:3px;accent-color:var(--deep);}
   .submit-btn{
-    margin-top:22px;width:100%;background:var(--stamp);color:#fff;border:none;border-radius:2px;
-    padding:13px;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;cursor:pointer;
+    margin-top:26px;width:100%;background:var(--accent);color:var(--accent-ink);border:none;
+    border-radius:999px;padding:15px;font-family:'Inter',sans-serif;font-weight:700;font-size:15px;
+    cursor:pointer;transition:transform .12s, box-shadow .12s;
+    box-shadow:0 12px 24px -10px rgba(255,182,72,0.7);
   }
-  .submit-btn:disabled{background:#9AA6A1;cursor:not-allowed;}
-  .submit-btn:hover:not(:disabled){background:#25403c;}
+  .submit-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 16px 28px -10px rgba(255,182,72,0.8);}
+  .submit-btn:disabled{background:#D9D6ED;color:#8b88a8;box-shadow:none;cursor:not-allowed;}
   .errormsg{color:var(--low);font-size:13px;margin-top:12px;display:none;}
-  .spinner{width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--stamp);border-radius:50%;display:inline-block;vertical-align:-2px;margin-right:6px;animation:spin .8s linear infinite;}
+  .spinner{width:14px;height:14px;border:2px solid rgba(122,75,0,0.25);border-top-color:var(--accent-ink);border-radius:50%;display:inline-block;vertical-align:-2px;margin-right:6px;animation:spin .8s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg);}}
 
-  .result{display:none;margin-top:32px;}
-  .stamp-row{display:flex;align-items:center;gap:16px;margin-bottom:18px;}
+  .result{display:none;margin-top:8px;}
+  .result-intro{
+    font-size:14px;color:var(--ink-soft);margin-bottom:22px;line-height:1.6;
+    padding-bottom:22px;border-bottom:1px solid var(--line);
+  }
+  .stamp-row{display:flex;align-items:center;gap:18px;margin-bottom:20px;}
   .stamp{
-    width:64px;height:64px;border:3px solid var(--stamp);border-radius:50%;display:flex;align-items:center;
-    justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:20px;
-    transform:rotate(-6deg);color:var(--stamp);flex-shrink:0;
+    width:68px;height:68px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;font-weight:500;font-size:22px;flex-shrink:0;
+    background:radial-gradient(circle, #F3F2FC 60%, transparent 100%);
+    border:3px solid var(--deep);color:var(--deep);
   }
   .stamp.pass{border-color:var(--pass);color:var(--pass);}
   .stamp.mid{border-color:var(--mid);color:var(--mid);}
   .stamp.low{border-color:var(--low);color:var(--low);}
-  .stamp-row h2{font-family:'Fraunces',serif;font-size:18px;font-weight:600;margin:0 0 2px;}
+  .stamp-row h2{font-family:'Instrument Serif',serif;font-size:22px;font-weight:400;margin:0 0 2px;}
   .stamp-row p{margin:0;font-size:12.5px;color:var(--ink-soft);}
-  .result .summary{font-size:14px;line-height:1.6;margin-bottom:16px;}
-  .sw{display:grid;grid-template-columns:1fr 1fr;gap:18px;font-size:13px;}
-  .sw h4{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 6px;color:var(--ink-soft);}
-  .sw ul{margin:0;padding-left:16px;line-height:1.55;}
+  .result .summary{font-size:14.5px;line-height:1.6;margin-bottom:20px;}
+  .sw{display:grid;grid-template-columns:1fr 1fr;gap:20px;font-size:13.5px;}
+  .sw-box{background:#FBFBFE;border:1px solid var(--line);border-radius:14px;padding:14px 16px;}
+  .sw h4{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 8px;}
+  .sw ul{margin:0;padding-left:16px;line-height:1.6;}
   .sw.strengths h4{color:var(--pass);}
   .sw.gaps h4{color:var(--low);}
-  @media (max-width:480px){.sw{grid-template-columns:1fr;}}
+  @media (max-width:600px){
+    h1{font-size:36px;}
+    .pathway{flex-wrap:wrap;gap:20px;}
+    .pathway::before{display:none;}
+    .waypoint{flex:1 1 30%;}
+    .sw{grid-template-columns:1fr;}
+    .panel{padding:26px;border-radius:16px;}
+  }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>CV Check</h1>
-  <p class="sub">Submit your CV and, optionally, the role or programme you're targeting. You'll get an instant AI-generated score and feedback. Staff may also review submissions.</p>
+<!-- ARTWORK SWAP POINT: replace this whole <svg class="bg-pattern">...</svg>
+     block with <div class="bg-photo"></div> once you have licensed photos.
+     See the matching comment in the CSS above, and README.md. -->
+<svg class="bg-pattern" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <symbol id="icon-cap" viewBox="0 0 40 40">
+      <path d="M2 14 L20 6 L38 14 L20 22 Z"/>
+      <path d="M20 22 L20 30" stroke-width="1.8" fill="none"/>
+      <circle cx="20" cy="31.5" r="1.8"/>
+      <path d="M9 16.3 L9 25 Q20 30 31 25 L31 16.3" fill="none" stroke-width="1.8"/>
+    </symbol>
+    <symbol id="icon-book" viewBox="0 0 40 40">
+      <path d="M4 8 Q12 4 19 8 L19 30 Q12 26 4 30 Z"/>
+      <path d="M36 8 Q28 4 21 8 L21 30 Q28 26 36 30 Z"/>
+    </symbol>
+    <symbol id="icon-scroll" viewBox="0 0 40 40">
+      <rect x="6" y="12" width="28" height="16" rx="8"/>
+      <line x1="6" y1="12" x2="6" y2="28" stroke-width="2"/>
+      <line x1="34" y1="12" x2="34" y2="28" stroke-width="2"/>
+    </symbol>
+    <pattern id="uniPattern" width="280" height="280" patternUnits="userSpaceOnUse">
+      <use href="#icon-cap" x="10" y="10" width="52" height="52"/>
+      <use href="#icon-book" x="150" y="40" width="46" height="46" transform="rotate(-10 173 63)"/>
+      <use href="#icon-scroll" x="60" y="150" width="48" height="48" transform="rotate(6 84 174)"/>
+      <use href="#icon-cap" x="200" y="190" width="38" height="38" transform="rotate(14 219 209)"/>
+      <use href="#icon-book" x="-10" y="200" width="40" height="40" transform="rotate(8 10 220)"/>
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#uniPattern)"/>
+</svg>
 
+<div class="hero">
+  <div class="eyebrow">GradScreen · Career enquiries</div>
+  <h1>Let's find <em>your</em><br>next role.</h1>
+  <p class="sub">Tell us what you're looking for and share your CV. A real adviser will follow up personally — and you'll get an instant AI-generated read on your CV while you wait.</p>
+</div>
+
+<div class="pathway">
+  <div class="waypoint active">
+    <div class="dot">1</div>
+    <div class="wlabel"><strong>Share</strong>your details &amp; CV</div>
+  </div>
+  <div class="waypoint">
+    <div class="dot">2</div>
+    <div class="wlabel"><strong>See</strong>an instant AI read</div>
+  </div>
+  <div class="waypoint">
+    <div class="dot">3</div>
+    <div class="wlabel"><strong>Hear</strong>from an adviser</div>
+  </div>
+</div>
+
+<div class="wrap">
   <div class="panel">
     <form id="cvForm">
-      <label for="name">Your name</label>
+      <div class="section-label">About you</div>
+      <label for="name">Full name</label>
       <input type="text" id="name" name="name" required>
 
-      <label for="email">Your email</label>
+      <label for="email">Email</label>
       <input type="email" id="email" name="email" required>
 
-      <label for="target">Target role or programme (optional)</label>
-      <textarea id="target" name="target" placeholder="e.g. Summer internship in marketing, or paste a job description"></textarea>
+      <label for="phone">Phone number</label>
+      <input type="tel" id="phone" name="phone">
 
-      <label>Your CV</label>
+      <div class="section-label">What you're looking for</div>
+      <label for="target">Role or industry you're interested in</label>
+      <textarea id="target" name="target" placeholder="e.g. Graduate marketing roles, or paste a specific job description"></textarea>
+
+      <label for="message">Anything else you'd like us to know?</label>
+      <textarea id="message" name="message" placeholder="Tell us about your situation, timeline, or questions"></textarea>
+
+      <label for="referral">How did you hear about us?</label>
+      <select id="referral" name="referral">
+        <option value="">Select an option</option>
+        <option value="University / careers service">University / careers service</option>
+        <option value="Friend or family">Friend or family</option>
+        <option value="Social media">Social media</option>
+        <option value="Search engine">Search engine</option>
+        <option value="Event or talk">Event or talk</option>
+        <option value="Other">Other</option>
+      </select>
+
+      <div class="section-label">Your CV</div>
       <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upload your CV">
         <div><strong>Click to upload</strong> or drag your CV here</div>
         <div style="margin-top:4px;">PDF, DOCX, or TXT — under 4MB</div>
@@ -91,12 +289,12 @@
 
       <div class="consent">
         <input type="checkbox" id="consent" name="consent" required>
-        <label for="consent" style="margin:0;text-transform:none;font-family:'Inter',sans-serif;letter-spacing:normal;font-size:12.5px;">
-          I consent to my CV being processed by an AI tool and reviewed by staff for feedback purposes.
+        <label for="consent" style="margin:0;font-weight:400;font-size:12.5px;">
+          I consent to my details and CV being processed by an AI tool and reviewed by staff so they can follow up with me.
         </label>
       </div>
 
-      <button type="submit" class="submit-btn" id="submitBtn">Check my CV</button>
+      <button type="submit" class="submit-btn" id="submitBtn">Send enquiry</button>
       <div class="errormsg" id="errormsg"></div>
     </form>
 
@@ -144,12 +342,15 @@ form.addEventListener('submit', async (e) => {
   errormsg.style.display = 'none';
   resultEl.style.display = 'none';
   submitBtn.disabled = true;
-  submitBtn.innerHTML = '<span class="spinner"></span>Analyzing...';
+  submitBtn.innerHTML = '<span class="spinner"></span>Sending...';
 
   const fd = new FormData();
   fd.append('name', document.getElementById('name').value);
   fd.append('email', document.getElementById('email').value);
+  fd.append('phone', document.getElementById('phone').value);
   fd.append('target', document.getElementById('target').value);
+  fd.append('message', document.getElementById('message').value);
+  fd.append('referral', document.getElementById('referral').value);
   fd.append('consent', document.getElementById('consent').checked ? 'true' : 'false');
   fd.append('cv', fileInput.files[0]);
 
@@ -160,12 +361,15 @@ form.addEventListener('submit', async (e) => {
       throw new Error(data.error || 'Something went wrong');
     }
     renderResult(data.analysis);
+    form.style.display = 'none';
+    document.querySelectorAll('.waypoint')[1].classList.add('active');
+    document.querySelectorAll('.waypoint')[2].classList.add('active');
   } catch(err){
     errormsg.textContent = err.message || 'Network error — please try again.';
     errormsg.style.display = 'block';
   } finally {
     submitBtn.disabled = false;
-    submitBtn.textContent = 'Check my CV';
+    submitBtn.textContent = 'Send enquiry';
   }
 });
 
@@ -174,14 +378,15 @@ function renderResult(d){
   const strengths = (d.strengths||[]).map(s => `<li>${escapeHtml(s)}</li>`).join('') || '<li>—</li>';
   const gaps = (d.gaps||[]).map(s => `<li>${escapeHtml(s)}</li>`).join('') || '<li>—</li>';
   resultEl.innerHTML = `
+    <p class="result-intro">Thanks — your enquiry has been sent and one of our advisers will be in touch soon. In the meantime, here's an instant AI read on your CV:</p>
     <div class="stamp-row">
       <div class="stamp ${band}">${d.score}</div>
-      <div><h2>Your result</h2><p>Score out of 100 against your target</p></div>
+      <div><h2>Your CV, at a glance</h2><p>Score out of 100 against what you told us you're looking for</p></div>
     </div>
     <p class="summary">${escapeHtml(d.summary || '')}</p>
     <div class="sw">
-      <div class="strengths"><h4>Strengths</h4><ul>${strengths}</ul></div>
-      <div class="gaps"><h4>Areas to improve</h4><ul>${gaps}</ul></div>
+      <div class="sw-box strengths"><h4>Strengths</h4><ul>${strengths}</ul></div>
+      <div class="sw-box gaps"><h4>Areas to improve</h4><ul>${gaps}</ul></div>
     </div>
   `;
   resultEl.style.display = 'block';
