@@ -151,6 +151,12 @@ from the consent checkbox on the enquiry form.
 
 - By default, only the **extracted text and AI analysis** are stored — not
   the original CV file — to limit how much personal data you're holding.
+- **Update:** the original CV file is now also stored (so staff can download
+  it from the dashboard), but it's automatically deleted 90 days after
+  submission — only the AI analysis and extracted text are kept after that.
+  Adjust `FILE_RETENTION_DAYS` in `server.js` if you want a different window.
+  Stored files live under `DATA_DIR/files`, so they need the same persistent
+  disk as the rest of your data to survive redeploys.
 - Every submission triggers a confirmation email to the student as well as
   an alert to your team — both via Resend, using the same keys.
 - Consider adding a data retention policy (e.g. a scheduled job that deletes

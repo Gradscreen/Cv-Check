@@ -16,6 +16,8 @@ const PORT = process.env.PORT || 3000;
 // production — otherwise submissions are wiped on every redeploy. See README.
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'submissions.json');
+const FILES_DIR = path.join(DATA_DIR, 'files');
+const FILE_RETENTION_DAYS = 90; // original CVs are deleted after this; the AI analysis/summary is kept
 const STAFF_PASSWORD = process.env.STAFF_PASSWORD || 'changeme';
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 const MAX_FILE_BYTES = 4 * 1024 * 1024; // 4MB
@@ -49,6 +51,7 @@ if (!process.env.COMPANY_EMAIL) {
 // concurrent writes at scale or multi-server deployment. MUST live on a
 // persistent disk in production or it's wiped on every redeploy.
 fs.mkdirSync(DATA_DIR, { recursive: true });
+fs.mkdirSync(FILES_DIR, { recursive: true });
 if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, '[]');
 
 function readSubmissions() {
@@ -57,6 +60,28 @@ function readSubmissions() {
 function writeSubmissions(list) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(list, null, 2));
 }
+
+// Delete stored CV files older than FILE_RETENTION_DAYS. The analysis/summary
+// text is kept — only the original document is removed.
+function cleanupOldFiles() {
+  const all = readSubmissions();
+  const cutoff = Date.now() - FILE_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+  let changed = false;
+  for (const record of all) {
+    if (record.storedFileName && new Date(record.submittedAt).getTime() < cutoff) {
+      const filePath = path.join(FILES_DIR, record.storedFileName);
+      if (fs.existsSync(filePath)) {
+        try { fs.unlinkSync(filePath); } catch (e) { console.error('Could not delete old file:', e.message); }
+      }
+      record.storedFileName = null;
+      record.fileDeletedAt = new Date().toISOString();
+      changed = true;
+    }
+  }
+  if (changed) writeSubmissions(all);
+}
+cleanupOldFiles();
+setInterval(cleanupOldFiles, 24 * 60 * 60 * 1000);
 
 // --- middleware ------------------------------------------------------------
 app.use(express.json());
@@ -291,6 +316,12 @@ app.post('/api/submit', submitLimiter, (req, res) => {
       if (consent !== 'true') return res.status(400).json({ error: 'Please confirm consent to processing before submitting' });
       if (!req.file) return res.status(400).json({ error: 'No CV file uploaded' });
 
+      // --- save the original file to disk (kept for FILE_RETENTION_DAYS) ----
+      const recordId = crypto.randomUUID();
+      const ext = (req.file.originalname.split('.').pop() || 'bin').toLowerCase();
+      const storedFileName = `${recordId}.${ext}`;
+      fs.writeFileSync(path.join(FILES_DIR, storedFileName), req.file.buffer);
+
       // --- AI analysis: never let a failure here lose the enquiry -----------
       let analysis = null;
       let analysisError = null;
@@ -303,7 +334,7 @@ app.post('/api/submit', submitLimiter, (req, res) => {
       }
 
       const record = {
-        id: crypto.randomUUID(),
+        id: recordId,
         submittedAt: new Date().toISOString(),
         studentName: name,
         studentEmail: email,
@@ -312,6 +343,7 @@ app.post('/api/submit', submitLimiter, (req, res) => {
         message: message || '',
         referral: referral || '',
         fileName: req.file.originalname,
+        storedFileName,
         analysis,
         analysisError
       };
@@ -360,7 +392,27 @@ app.get('/api/staff/submissions', requireStaff, (req, res) => {
   res.json(all);
 });
 
+app.get('/api/staff/submissions/:id/file', requireStaff, (req, res) => {
+  const all = readSubmissions();
+  const record = all.find(s => s.id === req.params.id);
+  if (!record || !record.storedFileName) {
+    return res.status(404).json({ error: 'This CV is no longer available (files are deleted after 90 days).' });
+  }
+  const filePath = path.join(FILES_DIR, record.storedFileName);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: 'This CV is no longer available.' });
+  }
+  res.download(filePath, record.fileName || record.storedFileName);
+});
+
 app.delete('/api/staff/submissions/:id', requireStaff, (req, res) => {
+  const target = readSubmissions().find(s => s.id === req.params.id);
+  if (target && target.storedFileName) {
+    const filePath = path.join(FILES_DIR, target.storedFileName);
+    if (fs.existsSync(filePath)) {
+      try { fs.unlinkSync(filePath); } catch (e) { console.error('Could not delete file:', e.message); }
+    }
+  }
   const all = readSubmissions().filter(s => s.id !== req.params.id);
   writeSubmissions(all);
   res.json({ ok: true });
