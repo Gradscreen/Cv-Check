@@ -207,6 +207,7 @@ async function loadSubmissions(){
       <div class="stamp ${band}">${d.score ?? '—'}</div>
       <div class="cbody">
         <p class="name">${escapeHtml(sub.studentName)}</p>
+        ${sub.analysisError ? `<p class="target" style="color:#E15B5B;">⚠ AI analysis failed — needs manual review</p>` : ''}
         <div class="contact">${escapeHtml(sub.studentEmail)}${sub.phone ? ' · ' + escapeHtml(sub.phone) : ''} · ${escapeHtml(date)} · ${escapeHtml(sub.fileName || '')}</div>
         ${sub.target ? `<div class="target">Interested in: ${escapeHtml(sub.target)}</div>` : ''}
         ${sub.referral ? `<div class="target" style="color:var(--ink-soft);font-weight:400;">Source: ${escapeHtml(sub.referral)}</div>` : ''}

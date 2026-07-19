@@ -288,11 +288,27 @@
       <div class="filename" id="filename"></div>
 
       <div class="consent">
-        <input type="checkbox" id="consent" name="consent" required>
-        <label for="consent" style="margin:0;font-weight:400;font-size:12.5px;">
-          I consent to my details and CV being processed by an AI tool and reviewed by staff so they can follow up with me.
+        <input type="checkbox" id="ageConfirm" name="ageConfirm" required>
+        <label for="ageConfirm" style="margin:0;font-weight:400;font-size:12.5px;">
+          I confirm I am 18 years of age or over.
         </label>
       </div>
+
+      <div class="consent">
+        <input type="checkbox" id="consent" name="consent" required>
+        <label for="consent" style="margin:0;font-weight:400;font-size:12.5px;">
+          I consent to my details and CV being processed by an AI tool and reviewed by staff so they can follow up with me. See our <a href="privacy.html" target="_blank" style="color:var(--deep);">privacy policy</a>.
+        </label>
+      </div>
+
+      <!-- Honeypot: hidden from real users via CSS, bots often fill every field -->
+      <div style="position:absolute;left:-9999px;top:-9999px;" aria-hidden="true">
+        <label for="website">Company website (leave blank)</label>
+        <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+      </div>
+      <input type="hidden" id="formLoadedAt" name="formLoadedAt">
+
+      <div id="turnstileContainer" style="margin-top:18px;"></div>
 
       <button type="submit" class="submit-btn" id="submitBtn">Send enquiry</button>
       <div class="errormsg" id="errormsg"></div>
@@ -310,6 +326,22 @@ const filenameEl = document.getElementById('filename');
 const submitBtn = document.getElementById('submitBtn');
 const errormsg = document.getElementById('errormsg');
 const resultEl = document.getElementById('result');
+
+document.getElementById('formLoadedAt').value = Date.now();
+
+// Load Cloudflare Turnstile only if the server has it configured — keeps the
+// form working with zero extra setup, and upgrades automatically once you add keys.
+let turnstileWidgetId = null;
+fetch('/api/config').then(r => r.json()).then(cfg => {
+  if (!cfg.turnstileSiteKey) return;
+  const script = document.createElement('script');
+  script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+  script.async = true;
+  script.onload = () => {
+    turnstileWidgetId = window.turnstile.render('#turnstileContainer', { sitekey: cfg.turnstileSiteKey });
+  };
+  document.head.appendChild(script);
+}).catch(() => {});
 
 dropzone.addEventListener('click', () => fileInput.click());
 dropzone.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' ') fileInput.click(); });
@@ -352,6 +384,12 @@ form.addEventListener('submit', async (e) => {
   fd.append('message', document.getElementById('message').value);
   fd.append('referral', document.getElementById('referral').value);
   fd.append('consent', document.getElementById('consent').checked ? 'true' : 'false');
+  fd.append('ageConfirm', document.getElementById('ageConfirm').checked ? 'true' : 'false');
+  fd.append('website', document.getElementById('website').value); // honeypot
+  fd.append('formLoadedAt', document.getElementById('formLoadedAt').value);
+  if (turnstileWidgetId !== null && window.turnstile) {
+    fd.append('cf-turnstile-response', window.turnstile.getResponse(turnstileWidgetId) || '');
+  }
   fd.append('cv', fileInput.files[0]);
 
   try {
@@ -360,7 +398,11 @@ form.addEventListener('submit', async (e) => {
     if(!res.ok){
       throw new Error(data.error || 'Something went wrong');
     }
-    renderResult(data.analysis);
+    if (data.analysisFailed) {
+      renderFallback();
+    } else {
+      renderResult(data.analysis);
+    }
     form.style.display = 'none';
     document.querySelectorAll('.waypoint')[1].classList.add('active');
     document.querySelectorAll('.waypoint')[2].classList.add('active');
@@ -372,6 +414,17 @@ form.addEventListener('submit', async (e) => {
     submitBtn.textContent = 'Send enquiry';
   }
 });
+
+function renderFallback(){
+  resultEl.innerHTML = `
+    <p class="result-intro" style="border-bottom:none;padding-bottom:0;margin-bottom:0;">
+      Thanks — your enquiry and CV have been sent, and one of our advisers will be in touch soon.
+      We couldn't generate instant feedback this time, but your details are safely with our team.
+    </p>
+  `;
+  resultEl.style.display = 'block';
+  resultEl.scrollIntoView({behavior:'smooth', block:'start'});
+}
 
 function renderResult(d){
   const band = scoreBand(d.score);

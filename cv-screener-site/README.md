@@ -106,19 +106,64 @@ Only use images you actually have the rights to — your own photography,
 stock with an appropriate license, or photos of students/staff who've given
 explicit consent to be used on the site.
 
+## Data persistence — do this before real traffic
+
+By default, submissions are stored in a JSON file inside the app folder.
+On Render (and most hosts), that file is **wiped on every redeploy** —
+including automatic ones triggered by a GitHub push. Fix this once:
+
+1. In Render, open your service → **Disks** → **Add Disk**
+2. Give it a name, size (1GB is plenty to start), and set the **Mount Path**
+   to `/var/data`
+3. In **Environment**, set `DATA_DIR=/var/data`
+4. Redeploy. From now on, submissions survive redeploys and restarts.
+
+(This requires a paid Render plan with disk support — free-tier services
+don't support persistent disks. If you outgrow this approach, migrate to a
+real hosted database like Render's managed Postgres.)
+
+## Spam protection
+
+Three layers, from "always on" to "optional but stronger":
+
+1. **Rate limiting** — max 8 submissions/hour per device, already built in.
+2. **Honeypot + timing checks** — a hidden field bots tend to fill in, and a
+   rejection of any submission completed in under 2.5 seconds. No setup
+   needed, already active.
+3. **Cloudflare Turnstile** (optional, recommended once this is public) —
+   a free, invisible CAPTCHA:
+   1. Go to [dash.cloudflare.com](https://dash.cloudflare.com) → **Turnstile**
+   2. Add a site, using your real domain
+   3. Copy the **Site Key** and **Secret Key** into Render's environment as
+      `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`
+   4. Redeploy — the widget appears on the form automatically once both keys
+      are set, with no code changes needed.
+
+## Privacy policy
+
+`public/privacy.html` is a **starting template**, not real legal advice —
+it's full of `[bracketed placeholders]` you need to fill in, and it should
+be reviewed by a solicitor before you publish it, particularly around UK
+GDPR since you may be handling data from under-18s. It's already linked
+from the consent checkbox on the enquiry form.
+
 ## Notes on privacy and safety
 
 - By default, only the **extracted text and AI analysis** are stored — not
   the original CV file — to limit how much personal data you're holding.
+- Every submission triggers a confirmation email to the student as well as
+  an alert to your team — both via Resend, using the same keys.
 - Consider adding a data retention policy (e.g. a scheduled job that deletes
-  submissions older than 90 days) if this will run continuously.
-- The submission form requires a consent checkbox before processing — update
-  the wording to match your institution's actual privacy policy.
-- Submissions are rate-limited (8 per hour per device) to prevent abuse and
-  runaway API costs. Adjust `submitLimiter` in `server.js` if needed.
+  submissions older than 90 days) if this will run continuously — and say
+  what that period actually is in `privacy.html`.
+- The submission form requires a consent checkbox linking to `privacy.html`
+  — fill in that template with your real policy before going live.
+- Submissions are rate-limited (8 per hour per device), plus honeypot/timing
+  checks and optional Turnstile, to prevent abuse and runaway API costs.
 - This gives a **basic first-pass score** — treat it as a triage tool, not a
   final decision-maker, especially for anything that affects a real student's
-  opportunities.
+  opportunities. If AI analysis fails for any reason, the enquiry is still
+  saved and emailed to your team so nothing gets lost.
 
 ## Going further
 
